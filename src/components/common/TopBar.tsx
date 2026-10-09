@@ -5,12 +5,16 @@ export interface TopBarProps {
   isDark: boolean
   onToggleTheme: () => void
   onOpenHelp: () => void
+  userEmail?: string
+  onLogout?: () => void
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   isDark,
   onToggleTheme,
   onOpenHelp,
+  userEmail,
+  onLogout,
 }) => {
   return (
     <header className="w-full h-16 border-b border-border bg-surface sticky top-0 z-30">
@@ -40,6 +44,23 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <CircleHelpIcon className="w-5 h-5" size={20} />
           </button>
+
+          {userEmail && onLogout && (
+            <div className="flex items-center gap-2 border border-border rounded-lg px-3 h-9">
+              <span className="text-xs text-ink-muted hidden sm:inline max-w-[140px] truncate">
+                {userEmail}
+              </span>
+              <button
+                type="button"
+                onClick={onLogout}
+                aria-label="Sign out"
+                className="text-xs text-ink-muted hover:text-ink transition-colors cursor-pointer"
+                data-testid="logout-btn"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
 
           <button
             type="button"

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import type { ParsedChatData } from './lib/types'
+import type { AuthUser } from './lib/auth'
+import { logout } from './lib/auth'
 import { parseChatWithWorker } from './lib/parseWorkerClient'
 import { processChatMessages } from './lib/catchupEngine'
 import { generateSampleChatText } from './lib/sampleChat'
 import { TopBar } from './components/common/TopBar'
 import { HelpModal } from './components/common/HelpModal'
+import { AuthGuard } from './components/common/AuthGuard'
 import { LandingScreen } from './components/screens/LandingScreen'
 import { ParsingScreen } from './components/screens/ParsingScreen'
 import { ResultsScreen } from './components/screens/ResultsScreen'
@@ -12,7 +15,7 @@ import { ErrorScreen } from './components/screens/ErrorScreen'
 
 type ScreenState = 'landing' | 'parsing' | 'results' | 'error'
 
-export const App: React.FC = () => {
+function AppContent({ user }: { user: AuthUser }) {
   const [screen, setScreen] = useState<ScreenState>('landing')
   const [chatData, setChatData] = useState<ParsedChatData | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
@@ -129,12 +132,20 @@ export const App: React.FC = () => {
     setScreen('landing')
   }, [])
 
+  const handleLogout = useCallback(async () => {
+    await logout()
+    // Full reload clears all in-memory state and auth
+    window.location.reload()
+  }, [])
+
   return (
     <div className="min-h-screen flex flex-col bg-bg text-ink">
       <TopBar
         isDark={isDark}
         onToggleTheme={toggleTheme}
         onOpenHelp={() => setIsHelpOpen(true)}
+        userEmail={user.email}
+        onLogout={handleLogout}
       />
 
       {screen === 'landing' && (
@@ -172,5 +183,9 @@ export const App: React.FC = () => {
     </div>
   )
 }
+
+export const App: React.FC = () => (
+  <AuthGuard>{(user) => <AppContent user={user} />}</AuthGuard>
+)
 
 export default App
