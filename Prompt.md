@@ -35,6 +35,53 @@
 
 ---
 
+### [P-009] Email OTP login — live and working
+**Date**: 2026-10-09
+**Commit**: `5c7acf8`
+**Live URL**: [protocol-xx.vercel.app](https://protocol-xx.vercel.app)
+
+**Prompt summary**:
+```
+Use nodemailer. Add email + OTP login. Deploy.
+Stack: Nodemailer + Resend SMTP, stateless JWT OTP tokens, httpOnly session cookies.
+No database required.
+```
+
+**What was built**:
+- `api/send-otp.ts` — generates cryptographically secure 6-digit OTP, signs into 10-min JWT,
+  sends via Resend SMTP (nodemailer transport). Stateless — no DB needed.
+- `api/verify-otp.ts` — constant-time OTP comparison (timing-attack safe), issues 7-day
+  httpOnly + SameSite=Strict session cookie on success.
+- `api/me.ts` — session check endpoint, reads httpOnly cookie, returns email.
+- `api/logout.ts` — clears session + logged_in cookies (Max-Age=0).
+- `src/lib/auth.ts` — `getMe()` and `logout()` fetch helpers.
+- `src/components/common/AuthGuard.tsx` — wraps entire app, checks session on mount,
+  shows LoginScreen if unauthenticated, passes user to children when authenticated.
+- `src/components/screens/LoginScreen.tsx` — two-stage UI: email input → OTP input.
+  Matches design spec (flat card, 1px border, no gradients, sentence case).
+- `src/components/common/TopBar.tsx` — added `userEmail` + "Sign out" button.
+- `src/App.tsx` — wrapped in AuthGuard, wired logout (full reload clears all in-memory state).
+- `vercel.json` — added SPA rewrite rule so `/api/*` routes work alongside the static app.
+- `.env.example` — documented RESEND_API_KEY, JWT_SECRET, FROM_EMAIL.
+- `package.json` — added `nodemailer` + `jsonwebtoken` (+ types).
+
+**Env vars set in Vercel** (Production + Preview):
+- `RESEND_API_KEY` — Resend SMTP password
+- `JWT_SECRET` — random 32-byte base64url secret
+- `FROM_EMAIL` — `onboarding@resend.dev`
+
+**Security notes**:
+- OTP is never stored server-side — embedded in a signed JWT, verified on submission
+- Constant-time comparison (`timingSafeEqual`) prevents timing attacks
+- Session cookie: `HttpOnly; Secure; SameSite=Strict` — not readable by JS
+- All API routes are same-origin (`connect-src 'self'` CSP satisfied)
+- No user data stored beyond the session JWT lifetime
+
+**Verification**: `npm test` 37/37 ✅ · `npm run build` clean ✅ · `npm audit` 0 vulns ✅
+**Deployed**: Status Ready in 58s ✅ · Login flow tested end-to-end ✅
+
+---
+
 ### [P-008] Vercel build fix — remove darwin-arm64 platform bindings
 **Date**: 2026-10-09
 **Commit**: `18ea359`
