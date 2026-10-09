@@ -16,7 +16,7 @@ export const Card: React.FC<CardProps> = ({
   const baseStyles = 'bg-card border rounded-2xl p-4 sm:p-6 transition-colors'
 
   const borderStyle = selected
-    ? 'border-border-strong ring-2 ring-accent'
+    ? 'border-border-strong outline outline-2 outline-accent'
     : 'border-border'
 
   const interactiveStyles = interactive

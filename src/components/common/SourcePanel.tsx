@@ -15,14 +15,13 @@ export const SourcePanel: React.FC<SourcePanelProps> = ({
   onClose,
   returnFocusRef,
 }) => {
-  const [isMinimised, setIsMinimised] = useState(false)
+  const [minimisedMessageId, setMinimisedMessageId] = useState<string | null>(null)
+  const isMinimised = minimisedMessageId === selectedMessageId
   const activeMessageRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (selectedMessageId) {
-      setIsMinimised(false)
-      // Slight delay for scroll
       const t = setTimeout(() => {
         activeMessageRef.current?.scrollIntoView({
           behavior: 'smooth',
@@ -139,7 +138,7 @@ export const SourcePanel: React.FC<SourcePanelProps> = ({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setIsMinimised((prev) => !prev)}
+              onClick={() => setMinimisedMessageId(isMinimised ? null : selectedMessageId)}
               aria-label={isMinimised ? 'Expand source message' : 'Minimise source message'}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink hover:bg-card-raised transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
             >

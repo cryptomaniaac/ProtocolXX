@@ -17,22 +17,24 @@ export const App: React.FC = () => {
   const [chatData, setChatData] = useState<ParsedChatData | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [parsingProgress, setParsingProgress] = useState<number>(0)
-  const [parsingStatus, setParsingStatus] = useState<string>('')
+  const [fileName, setFileName] = useState<string>('WhatsApp Chat.txt')
   const [isHelpOpen, setIsHelpOpen] = useState(false)
 
-  // Theme management: only persists theme preference, never chat content
+  // Theme management: stores only the theme choice
   const [isDark, setIsDark] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false
+    if (typeof window === 'undefined') return true
     const saved = localStorage.getItem('unread_catchup_theme')
     if (saved) return saved === 'dark'
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return !window.matchMedia('(prefers-color-scheme: light)').matches
   })
 
   useEffect(() => {
     if (isDark) {
+      document.documentElement.setAttribute('data-theme', 'dark')
       document.documentElement.classList.add('dark')
       localStorage.setItem('unread_catchup_theme', 'dark')
     } else {
+      document.documentElement.setAttribute('data-theme', 'light')
       document.documentElement.classList.remove('dark')
       localStorage.setItem('unread_catchup_theme', 'light')
     }
@@ -48,7 +50,8 @@ export const App: React.FC = () => {
       if (
         e.key === '?' &&
         document.activeElement?.tagName !== 'INPUT' &&
-        document.activeElement?.tagName !== 'TEXTAREA'
+        document.activeElement?.tagName !== 'TEXTAREA' &&
+        document.activeElement?.tagName !== 'SELECT'
       ) {
         e.preventDefault()
         setIsHelpOpen((prev) => !prev)
@@ -62,29 +65,23 @@ export const App: React.FC = () => {
   const processText = useCallback(async (text: string) => {
     setScreen('parsing')
     setParsingProgress(15)
-    setParsingStatus('Reading chat file...')
 
     try {
       setParsingProgress(35)
-      setParsingStatus('Validating export structure...')
 
       const rawMessages = await parseChatWithWorker(text, {
         timeoutMs: 5000,
-        onProgress: (p, label) => {
+        onProgress: (p) => {
           setParsingProgress(p)
-          setParsingStatus(label)
         },
       })
 
       setParsingProgress(70)
-      setParsingStatus('Extracting decisions, action items and blockers...')
 
       const processed = processChatMessages(rawMessages)
 
       setParsingProgress(100)
-      setParsingStatus('Generating briefing...')
 
-      // Brief transition to let progress bar smoothly complete
       setTimeout(() => {
         setChatData(processed)
         setScreen('results')
@@ -98,13 +95,14 @@ export const App: React.FC = () => {
 
   const handleFileSelected = useCallback(
     (file: File) => {
+      setFileName(file.name)
       const reader = new FileReader()
       reader.onload = (e) => {
         const text = e.target?.result as string
         if (text) {
           processText(text)
         } else {
-          setErrorMessage('File could not be read or is empty.')
+          setErrorMessage('Selected file is empty.')
           setScreen('error')
         }
       }
@@ -118,6 +116,7 @@ export const App: React.FC = () => {
   )
 
   const handleLoadSampleChat = useCallback(() => {
+    setFileName('Project Phoenix Launch [FAKE].txt')
     const sampleText = generateSampleChatText()
     processText(sampleText)
   }, [processText])
@@ -127,18 +126,15 @@ export const App: React.FC = () => {
     setChatData(null)
     setErrorMessage('')
     setParsingProgress(0)
-    setParsingStatus('')
     setScreen('landing')
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col bg-base dark:bg-base-dark text-ink dark:text-ink-dark transition-colors duration-150">
+    <div className="min-h-screen flex flex-col bg-bg text-ink">
       <TopBar
         isDark={isDark}
         onToggleTheme={toggleTheme}
         onOpenHelp={() => setIsHelpOpen(true)}
-        onClearData={handleClearData}
-        hasData={screen === 'results' && chatData !== null}
       />
 
       {screen === 'landing' && (
@@ -151,7 +147,7 @@ export const App: React.FC = () => {
       {screen === 'parsing' && (
         <ParsingScreen
           progress={parsingProgress}
-          statusText={parsingStatus}
+          fileName={fileName}
         />
       )}
 
@@ -166,7 +162,6 @@ export const App: React.FC = () => {
         <ErrorScreen
           errorMessage={errorMessage}
           onReset={handleClearData}
-          onTrySample={handleLoadSampleChat}
         />
       )}
 
