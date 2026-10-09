@@ -35,6 +35,41 @@
 
 ---
 
+### [P-008] Vercel build fix — remove darwin-arm64 platform bindings
+**Date**: 2026-10-09
+**Commit**: `18ea359`
+
+**Prompt**: *(screenshot of Vercel build error: EBADPLATFORM)*
+
+**Root cause**: `@oxlint/binding-darwin-arm64` and `@rolldown/binding-darwin-arm64` were
+explicitly listed in `devDependencies`. These are macOS Apple Silicon–only native binaries.
+Vercel builds on Linux x64 — npm errors with `EBADPLATFORM`.
+
+**Fix**: Removed both lines from `package.json`. Their parent packages (`oxlint`, `vite`)
+auto-install the correct platform binary as an optional dependency — no manual pinning needed.
+
+**Outcome**:
+- `package.json`: 2 lines removed
+- `package-lock.json`: regenerated
+- `npm install` + `npm run build` pass locally
+- Vercel redeploy succeeded: **[protocol-xx.vercel.app](https://protocol-xx.vercel.app)**
+
+---
+
+### [P-007] Deploy to Vercel
+**Date**: 2026-10-09
+
+**Prompt**: `deploy on vercel`
+
+**Outcome**:
+- Deployed via Vercel dashboard (Import Git Repository → `cryptomaniaac/ProtocolXX`)
+- `vercel.json` auto-detected: build command `npm run build`, output `dist/`
+- All security headers served by Vercel (CSP, COOP, Referrer-Policy, etc.)
+- Auto-deploy on every push to `main` enabled
+- Live URL: **[protocol-xx.vercel.app](https://protocol-xx.vercel.app)**
+
+---
+
 ### [P-006] Security hardening — secrets, CI, license
 **Date**: 2026-10-09
 **Commit**: `d4c703a`
