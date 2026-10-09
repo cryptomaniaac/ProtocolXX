@@ -1,57 +1,44 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { Req, Res } from './_lib/middleware.js'
 import { randomInt } from 'node:crypto'
 import nodemailer from 'nodemailer'
 import jwt from 'jsonwebtoken'
+import { json, methodGuard, parseBody } from './_lib/middleware.js'
+import { checkRateLimit, rateLimitKey } from './_lib/rateLimit.js'
+import { sendOtpSchema } from './_lib/schemas.js'
 
-// Safe email regex — no nested quantifiers, no backtracking risk
-const EMAIL_RE = /^[a-zA-Z0-9._%+\-]{1,64}@[a-zA-Z0-9.\-]{1,253}\.[a-zA-Z]{2,}$/
+/** POST /api/send-otp — generate and email a 6-digit OTP */
+export default async function handler(
+  req: Req,
+  res: Res,
+): Promise<void> {
+  if (!methodGuard(req, res, ['POST'])) return
 
-function getBody(req: IncomingMessage): Promise<Record<string, unknown>> {
-  return new Promise((resolve, reject) => {
-    let data = ''
-    req.on('data', (chunk: Buffer) => {
-      data += chunk.toString()
-      if (data.length > 4096) reject(new Error('Payload too large'))
-    })
-    req.on('end', () => {
-      try {
-        resolve(JSON.parse(data || '{}'))
-      } catch {
-        reject(new Error('Invalid JSON'))
-      }
-    })
-    req.on('error', reject)
-  })
-}
-
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json')
-
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204)
-    res.end()
-    return
-  }
-
-  if (req.method !== 'POST') {
-    res.writeHead(405)
-    res.end(JSON.stringify({ error: 'Method not allowed' }))
-    return
-  }
-
-  let body: Record<string, unknown>
+  // Parse and validate body with Zod
+  let body: unknown
   try {
-    body = await getBody(req)
+    body = await parseBody(req)
   } catch {
-    res.writeHead(400)
-    res.end(JSON.stringify({ error: 'Invalid request body' }))
+    json(res, 400, { error: 'Invalid request body.' })
     return
   }
 
-  const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-  if (!email || !EMAIL_RE.test(email)) {
-    res.writeHead(400)
-    res.end(JSON.stringify({ error: 'Enter a valid email address.' }))
+  const parsed = sendOtpSchema.safeParse(body)
+  if (!parsed.success) {
+    const message = parsed.error.issues[0]?.message ?? 'Invalid input.'
+    json(res, 400, { error: message })
+    return
+  }
+
+  const { email } = parsed.data
+
+  // Rate limit: max 3 OTP requests per email per 10 minutes
+  const rl = checkRateLimit(rateLimitKey('send-otp', email), 3, 10 * 60 * 1000)
+  if (!rl.allowed) {
+    const retryAfterSec = Math.ceil(rl.retryAfterMs / 1000)
+    res.setHeader('Retry-After', String(retryAfterSec))
+    json(res, 429, {
+      error: `Too many requests. Try again in ${retryAfterSec} seconds.`,
+    })
     return
   }
 
@@ -60,19 +47,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const fromEmail = process.env.FROM_EMAIL ?? 'onboarding@resend.dev'
 
   if (!secret || !smtpPass) {
-    console.error('Missing env: JWT_SECRET or RESEND_API_KEY')
-    res.writeHead(500)
-    res.end(JSON.stringify({ error: 'Server configuration error.' }))
+    console.error('[send-otp] Missing env: JWT_SECRET or RESEND_API_KEY')
+    json(res, 500, { error: 'Server configuration error.' })
     return
   }
 
-  // 6-digit OTP using cryptographically secure random
+  // Cryptographically secure 6-digit OTP
   const otp = String(randomInt(100000, 1000000))
 
-  // Sign OTP + email into a JWT — stateless, no DB needed
+  // Sign OTP + email into a short-lived JWT — stateless, no DB needed
   const token = jwt.sign({ email, otp }, secret, { expiresIn: '10m' })
 
-  // Send via Resend SMTP
   const transporter = nodemailer.createTransport({
     host: 'smtp.resend.com',
     port: 465,
@@ -93,12 +78,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       ].join('\n'),
     })
   } catch (err) {
-    console.error('Failed to send email:', err)
-    res.writeHead(502)
-    res.end(JSON.stringify({ error: 'Failed to send email. Try again.' }))
+    console.error('[send-otp] SMTP error:', err)
+    json(res, 502, { error: 'Failed to send email. Try again.' })
     return
   }
 
-  res.writeHead(200)
-  res.end(JSON.stringify({ token }))
+  json(res, 200, { token })
 }

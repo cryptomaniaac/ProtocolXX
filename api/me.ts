@@ -1,36 +1,29 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { Req, Res } from './_lib/middleware.js'
 import jwt from 'jsonwebtoken'
+import { json, parseCookie } from './_lib/middleware.js'
 
-function parseCookie(header: string, name: string): string | null {
-  const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`))
-  return match ? match[1] : null
-}
-
-export default function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('Content-Type', 'application/json')
-
-  const cookieHeader = req.headers.cookie ?? ''
-  const sessionToken = parseCookie(cookieHeader, 'session')
+/** GET /api/me — return the signed-in user's email, or 401 */
+export default function handler(
+  req: Req,
+  res: Res,
+): void {
+  const sessionToken = parseCookie(req.headers.cookie ?? '', 'session')
 
   if (!sessionToken) {
-    res.writeHead(401)
-    res.end(JSON.stringify({ error: 'Not authenticated' }))
+    json(res, 401, { error: 'Not authenticated.' })
     return
   }
 
   const secret = process.env.JWT_SECRET
   if (!secret) {
-    res.writeHead(500)
-    res.end(JSON.stringify({ error: 'Server configuration error.' }))
+    json(res, 500, { error: 'Server configuration error.' })
     return
   }
 
   try {
     const payload = jwt.verify(sessionToken, secret) as { email: string }
-    res.writeHead(200)
-    res.end(JSON.stringify({ email: payload.email }))
+    json(res, 200, { email: payload.email })
   } catch {
-    res.writeHead(401)
-    res.end(JSON.stringify({ error: 'Session expired. Sign in again.' }))
+    json(res, 401, { error: 'Session expired. Sign in again.' })
   }
 }
