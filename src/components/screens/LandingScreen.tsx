@@ -1,6 +1,7 @@
 import React from 'react'
 import { UploadZone } from '../common/UploadZone'
-import { Button } from '../common/Button'
+import { InputCard } from '../common/Card'
+import { Chip } from '../common/Chip'
 import { PrivacyBadge } from '../common/PrivacyBadge'
 
 export interface LandingScreenProps {
@@ -15,39 +16,41 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
   isLoading = false,
 }) => {
   return (
-    <main className="w-full flex-1 flex flex-col items-center justify-center px-6 py-12 md:py-20 animate-in fade-in duration-200">
-      <div className="w-full max-w-[600px] flex flex-col items-center text-center space-y-8">
-        {/* Headline & Subtext */}
-        <div className="space-y-3">
-          <h1 className="text-[32px] md:text-[40px] font-bold text-ink dark:text-ink-dark tracking-tight leading-tight">
-            What did I miss?
-          </h1>
-          <p className="text-[17px] md:text-[18px] text-ink-muted dark:text-ink-muted-dark readable-measure mx-auto">
-            Get an instant briefing from long chat exports. Key decisions, action items, and blockers—computed entirely in your browser.
-          </p>
+    <main className="w-full flex-1">
+      <div className="max-w-[880px] mx-auto px-4 md:px-6 pt-12 md:pt-24 pb-16">
+        {/* Headline */}
+        <h1 className="text-[32px] sm:text-[44px] leading-[38px] sm:leading-[50px] font-semibold text-ink tracking-[-0.01em]">
+          What did I miss?
+        </h1>
+
+        {/* Subtext */}
+        <p className="mt-3 text-base leading-6 text-ink-muted max-w-[60ch]">
+          Get a briefing from a long chat. Everything is processed on your device.
+        </p>
+
+        {/* 32px gap, then the input card */}
+        <div className="mt-8">
+          <InputCard>
+            <UploadZone onFileSelected={onFileSelected} disabled={isLoading} />
+          </InputCard>
         </div>
 
-        {/* Upload Zone (Single Primary Action) */}
-        <div className="w-full">
-          <UploadZone onFileSelected={onFileSelected} disabled={isLoading} />
-        </div>
-
-        {/* Secondary Action: Try sample chat */}
-        <div className="flex flex-col items-center gap-3 w-full">
-          <span className="text-[13px] text-ink-muted dark:text-ink-muted-dark">or</span>
-          <Button
-            variant="outline"
+        {/* 24px below: chip with caption */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Chip
             data-testid="sample-button"
             onClick={onLoadSampleChat}
             disabled={isLoading}
-            className="w-full sm:w-auto px-6 py-2.5 font-medium"
           >
-            Try sample chat (Project Phoenix [FAKE])
-          </Button>
+            Try sample chat
+          </Chip>
+          <span className="text-sm text-ink-faint">
+            Uses fake demo data.
+          </span>
         </div>
 
-        {/* Privacy Badge */}
-        <div className="pt-4">
+        {/* 48px gap, then privacy badge */}
+        <div className="mt-12">
           <PrivacyBadge />
         </div>
       </div>

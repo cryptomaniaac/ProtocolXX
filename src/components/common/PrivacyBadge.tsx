@@ -15,20 +15,22 @@ export const PrivacyBadge: React.FC<PrivacyBadgeProps> = ({
 
   return (
     <div
-      className={`inline-flex flex-wrap items-center justify-center gap-2 text-[13px] text-ink-muted dark:text-ink-muted-dark ${className}`}
+      data-testid="privacy-badge"
+      className={`inline-flex flex-wrap items-center justify-center gap-3 p-2 px-4 rounded-full border border-border bg-card text-sm text-ink-muted select-none ${className}`}
     >
-      <div className="inline-flex items-center gap-1.5 font-medium">
-        <ShieldIcon className="w-4 h-4 text-[#1A6B6B] dark:text-[#2D9B9B] shrink-0" />
+      <div className="inline-flex items-center gap-2">
+        <ShieldIcon className="w-4 h-4 text-accent shrink-0" size={16} />
         <span>Processed on your device. Nothing leaves this browser.</span>
       </div>
 
       {showLiveCounter && (
         <span
-          className="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded border border-[#1A6B6B]/20 bg-[#1A6B6B]/5 text-[#1A6B6B] dark:text-[#2D9B9B]"
+          data-testid="network-counter"
+          className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full border border-border text-ink-muted text-sm font-normal"
           title="Monitored via PerformanceObserver"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-          <span>Outbound network calls: {requestCount}</span>
+          <span className="w-2 h-2 rounded-full bg-accent shrink-0 inline-block" />
+          <span>Outbound requests: {requestCount}</span>
         </span>
       )}
     </div>

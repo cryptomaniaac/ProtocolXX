@@ -1,133 +1,166 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { ChatMessage } from '../../lib/types'
-import { XIcon } from './Icons'
+import { XIcon, MinusIcon, ChevronDownIcon } from './Icons'
 
 export interface SourcePanelProps {
   selectedMessageId: string | null
   messages: ChatMessage[]
   onClose: () => void
-  isMobileDrawer?: boolean
+  returnFocusRef?: React.RefObject<HTMLElement | null>
 }
 
 export const SourcePanel: React.FC<SourcePanelProps> = ({
   selectedMessageId,
   messages,
   onClose,
-  isMobileDrawer = false,
+  returnFocusRef,
 }) => {
+  const [isMinimised, setIsMinimised] = useState(false)
   const activeMessageRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (selectedMessageId && activeMessageRef.current) {
-      activeMessageRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      })
+    if (selectedMessageId) {
+      setIsMinimised(false)
+      // Slight delay for scroll
+      const t = setTimeout(() => {
+        activeMessageRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        })
+      }, 50)
+      return () => clearTimeout(t)
     }
   }, [selectedMessageId])
 
-  if (!selectedMessageId) {
-    if (isMobileDrawer) return null
-    return (
-      <div className="hidden lg:flex flex-col items-center justify-center p-8 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark h-[520px] text-center text-ink-muted dark:text-ink-muted-dark">
-        <p className="text-[14px]">
-          Click any card to inspect its exact source message and surrounding context.
-        </p>
-      </div>
-    )
-  }
+  // Handle escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectedMessageId) {
+        onClose()
+        returnFocusRef?.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedMessageId, onClose, returnFocusRef])
+
+  if (!selectedMessageId) return null
 
   const selectedIndex = messages.findIndex((m) => m.id === selectedMessageId)
-  const currentMsg = selectedIndex !== -1 ? messages[selectedIndex] : null
+  if (selectedIndex === -1) return null
 
-  // Capture surrounding context (up to 2 previous, 2 subsequent)
-  const contextStart = Math.max(0, selectedIndex - 2)
-  const contextEnd = Math.min(messages.length, selectedIndex + 3)
-  const contextMessages =
-    selectedIndex !== -1 ? messages.slice(contextStart, contextEnd) : []
+  const contextStart = Math.max(0, selectedIndex - 5)
+  const contextEnd = Math.min(messages.length, selectedIndex + 6)
+  const contextMessages = messages.slice(contextStart, contextEnd)
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
+  const formatTime = (d: Date) => {
+    return d.toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
     })
   }
 
-  const content = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border-dark mb-4">
-        <div>
-          <span className="text-[11px] font-bold tracking-wider text-[#1A6B6B] dark:text-[#2D9B9B] uppercase">
-            Source Context
-          </span>
-          <p className="text-[12px] text-ink-muted dark:text-ink-muted-dark">
-            {currentMsg ? formatDate(currentMsg.timestamp) : ''}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close source view"
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink dark:text-ink-muted-dark dark:hover:text-ink-dark hover:bg-black/5 dark:hover:bg-white/5 cursor-pointer"
-        >
-          <XIcon className="w-4 h-4" />
-        </button>
-      </div>
+  const handleClose = () => {
+    onClose()
+    returnFocusRef?.current?.focus()
+  }
 
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-        {contextMessages.map((msg) => {
-          const isTarget = msg.id === selectedMessageId
-          return (
-            <div
-              key={msg.id}
-              ref={isTarget ? activeMessageRef : undefined}
-              className={`p-3.5 rounded-lg text-[14px] transition-all leading-relaxed ${
-                isTarget
-                  ? 'bg-[#E6F0F0] dark:bg-[#1A3535] border border-[#1A6B6B] dark:border-[#2D9B9B] shadow-sm'
-                  : 'bg-black/[0.02] dark:bg-white/[0.02] border border-transparent opacity-75'
-              }`}
-            >
-              {isTarget && (
-                <div className="text-[11px] font-bold text-[#1A6B6B] dark:text-[#2D9B9B] uppercase tracking-wider mb-1">
-                  Source message
-                </div>
-              )}
-              <div className="flex items-center justify-between text-[12px] text-ink-muted dark:text-ink-muted-dark mb-1">
-                <span className="font-semibold text-ink dark:text-ink-dark">
-                  {msg.sender}
-                </span>
-                <span>{formatDate(msg.timestamp)}</span>
-              </div>
-              <p className="whitespace-pre-wrap break-words font-normal" dir="auto">
-                {msg.text}
-              </p>
+  const messagesBody = (
+    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {contextMessages.map((msg) => {
+        const isTarget = msg.id === selectedMessageId
+        return (
+          <div
+            key={msg.id}
+            ref={isTarget ? activeMessageRef : undefined}
+            className={`p-3 rounded-xl text-base ${
+              isTarget
+                ? 'bg-accent-soft border-l-2 border-accent pl-3 text-ink'
+                : 'text-ink-muted'
+            }`}
+          >
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className={`font-semibold ${isTarget ? 'text-ink' : 'text-ink-muted'}`}>
+                {msg.sender}
+              </span>
+              <span className="text-ink-faint text-xs">
+                {formatTime(msg.timestamp)}
+              </span>
             </div>
-          )
-        })}
-      </div>
+            <p className="whitespace-pre-wrap break-words">
+              {msg.text}
+            </p>
+          </div>
+        )
+      })}
     </div>
   )
 
-  if (isMobileDrawer) {
-    return (
+  return (
+    <>
+      {/* Mobile Bottom Sheet (Screen width < 1024px) */}
       <div
         role="dialog"
-        aria-modal="true"
-        aria-label="Source message drawer"
-        className="fixed inset-0 z-40 bg-black/50 lg:hidden flex flex-col justify-end animate-in fade-in duration-150"
+        aria-label="Source message"
+        data-testid="source-panel"
+        className="fixed inset-0 z-40 lg:hidden flex flex-col justify-end bg-black/60"
       >
-        <div className="bg-surface dark:bg-surface-dark border-t border-border dark:border-border-dark rounded-t-xl p-5 max-h-[80vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-200">
-          {content}
+        <div className="w-full bg-surface border-t border-border-strong rounded-t-2xl max-h-[70vh] flex flex-col overflow-hidden">
+          <div className="h-12 px-4 flex items-center justify-between border-b border-border shrink-0">
+            <span className="text-base font-semibold text-ink">
+              Source message
+            </span>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close source message"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-ink-muted hover:text-ink hover:bg-card-raised transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <XIcon className="w-5 h-5" size={20} />
+            </button>
+          </div>
+          {messagesBody}
         </div>
       </div>
-    )
-  }
 
-  return (
-    <div className="hidden lg:flex flex-col p-5 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark sticky top-24 max-h-[calc(100vh-120px)] overflow-hidden shadow-sm">
-      {content}
-    </div>
+      {/* Desktop Floating Panel (Screen width >= 1024px) */}
+      <aside
+        ref={panelRef}
+        role="dialog"
+        aria-label="Source message"
+        data-testid="source-panel"
+        className="hidden lg:flex fixed bottom-6 right-6 z-40 w-[420px] max-h-[60vh] bg-surface border border-border-strong rounded-2xl flex-col overflow-hidden"
+      >
+        <div className="h-12 px-4 flex items-center justify-between border-b border-border shrink-0">
+          <span className="text-base font-semibold text-ink">
+            Source message
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setIsMinimised((prev) => !prev)}
+              aria-label={isMinimised ? 'Expand source message' : 'Minimise source message'}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink hover:bg-card-raised transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              {isMinimised ? (
+                <ChevronDownIcon className="w-4 h-4 rotate-180" size={16} />
+              ) : (
+                <MinusIcon className="w-4 h-4" size={16} />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Close source message"
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-muted hover:text-ink hover:bg-card-raised transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <XIcon className="w-4 h-4" size={16} />
+            </button>
+          </div>
+        </div>
+        {!isMinimised && messagesBody}
+      </aside>
+    </>
   )
 }

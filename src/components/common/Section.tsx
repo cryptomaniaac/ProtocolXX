@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { ChevronRightIcon, ChevronDownIcon } from './Icons'
+import { Badge } from './Badge'
 
 export interface SectionProps {
   id: string
   title: string
   count?: number
   defaultOpen?: boolean
+  icon?: React.ReactNode
   children: React.ReactNode
   className?: string
 }
@@ -15,14 +17,16 @@ export const Section: React.FC<SectionProps> = ({
   title,
   count,
   defaultOpen = false,
+  icon,
   children,
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div
-      className={`border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark overflow-hidden transition-all ${className}`}
+    <section
+      id={id}
+      className={`border border-border rounded-2xl bg-card overflow-hidden transition-colors ${className}`}
     >
       <button
         type="button"
@@ -30,24 +34,21 @@ export const Section: React.FC<SectionProps> = ({
         aria-expanded={isOpen}
         aria-controls={`panel-${id}`}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full min-h-[48px] px-4 md:px-6 py-3 flex items-center justify-between text-left hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-[#1A6B6B]"
+        className="w-full min-h-[52px] px-6 py-4 flex items-center justify-between text-left hover:bg-card-raised transition-colors cursor-pointer select-none focus-visible:outline-2 focus-visible:outline-accent"
       >
         <div className="flex items-center gap-3">
-          <span className="text-ink-muted dark:text-ink-muted-dark">
+          <span className="text-ink-muted">
             {isOpen ? (
-              <ChevronDownIcon className="w-4 h-4" />
+              <ChevronDownIcon className="w-5 h-5" size={20} />
             ) : (
-              <ChevronRightIcon className="w-4 h-4" />
+              <ChevronRightIcon className="w-5 h-5" size={20} />
             )}
           </span>
-          <span className="font-semibold text-[16px] text-ink dark:text-ink-dark">
+          {icon && <span className="text-ink-muted">{icon}</span>}
+          <h2 className="text-xl font-semibold text-ink leading-tight">
             {title}
-          </span>
-          {typeof count === 'number' && (
-            <span className="text-[13px] font-medium text-ink-muted dark:text-ink-muted-dark bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full">
-              {count}
-            </span>
-          )}
+          </h2>
+          {typeof count === 'number' && <Badge count={count} />}
         </div>
       </button>
 
@@ -56,11 +57,11 @@ export const Section: React.FC<SectionProps> = ({
           id={`panel-${id}`}
           role="region"
           aria-labelledby={`header-${id}`}
-          className="px-4 md:px-6 pb-6 pt-2 border-t border-border dark:border-border-dark animate-in fade-in duration-200"
+          className="px-6 pb-6 pt-2 border-t border-border"
         >
           {children}
         </div>
       )}
-    </div>
+    </section>
   )
 }

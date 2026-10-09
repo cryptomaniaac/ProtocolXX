@@ -1,37 +1,47 @@
 import React from 'react'
 import type { UrgencyLevel } from '../../lib/types'
-import { TriangleAlertIcon, ClockIcon, InfoIcon } from './Icons'
+import { TriangleAlertIcon, ClockIcon, ArrowDownIcon } from './Icons'
 
 export interface BadgeProps {
-  level: UrgencyLevel
+  level?: UrgencyLevel
   label?: string
+  count?: number
   className?: string
 }
 
-export const Badge: React.FC<BadgeProps> = ({ level, label, className = '' }) => {
-  const displayLabel = label || level
+export const Badge: React.FC<BadgeProps> = ({ level, label, count, className = '' }) => {
+  // Count badge variant
+  if (typeof count === 'number') {
+    return (
+      <span
+        className={`inline-flex items-center justify-center h-7 px-3 rounded-full text-sm font-semibold bg-accent-soft text-accent select-none ${className}`}
+      >
+        {count}
+      </span>
+    )
+  }
+
+  // Urgency badge
+  const displayLabel = label || level || 'Low'
+  const effectiveLevel = level || 'Low'
 
   let icon: React.ReactNode = null
-  let textColour = ''
-  let borderTint = ''
+  let badgeClasses = ''
 
-  if (level === 'High') {
-    icon = <TriangleAlertIcon className="w-3.5 h-3.5 shrink-0 text-[#C96A2E] dark:text-[#E07A3B]" />
-    textColour = 'text-[#A04515] dark:text-[#F09060]'
-    borderTint = 'border-[#C96A2E]/30 bg-[#C96A2E]/5'
-  } else if (level === 'Medium') {
-    icon = <ClockIcon className="w-3.5 h-3.5 shrink-0 text-[#1A6B6B] dark:text-[#2D9B9B]" />
-    textColour = 'text-[#145555] dark:text-[#52C5C5]'
-    borderTint = 'border-[#1A6B6B]/30 bg-[#1A6B6B]/5'
+  if (effectiveLevel === 'High') {
+    icon = <TriangleAlertIcon className="w-4 h-4 shrink-0 text-high-fg" size={16} />
+    badgeClasses = 'bg-high-bg text-high-fg'
+  } else if (effectiveLevel === 'Medium') {
+    icon = <ClockIcon className="w-4 h-4 shrink-0 text-medium-fg" size={16} />
+    badgeClasses = 'bg-medium-bg text-medium-fg'
   } else {
-    icon = <InfoIcon className="w-3.5 h-3.5 shrink-0 text-[#6B7280] dark:text-[#9CA3AF]" />
-    textColour = 'text-[#4B5563] dark:text-[#9CA3AF]'
-    borderTint = 'border-[#6B7280]/30 bg-[#6B7280]/5'
+    icon = <ArrowDownIcon className="w-4 h-4 shrink-0 text-low-fg" size={16} />
+    badgeClasses = 'bg-low-bg text-low-fg'
   }
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[12px] font-medium rounded border ${borderTint} ${textColour} ${className}`}
+      className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-full text-sm font-normal select-none ${badgeClasses} ${className}`}
       aria-label={`Urgency: ${displayLabel}`}
     >
       {icon}

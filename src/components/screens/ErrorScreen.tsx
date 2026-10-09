@@ -1,53 +1,51 @@
 import React from 'react'
-import { InfoIcon } from '../common/Icons'
+import { TriangleAlertIcon } from '../common/Icons'
 import { Button } from '../common/Button'
 import { Card } from '../common/Card'
 
 export interface ErrorScreenProps {
-  errorMessage: string
+  errorMessage?: string
   onReset: () => void
-  onTrySample: () => void
 }
 
 export const ErrorScreen: React.FC<ErrorScreenProps> = ({
   errorMessage,
   onReset,
-  onTrySample,
 }) => {
   return (
-    <main className="w-full flex-1 max-w-[600px] mx-auto px-4 md:px-6 py-12 md:py-16 flex flex-col items-center justify-center animate-in fade-in duration-150">
-      <Card className="w-full text-center p-8 space-y-6">
-        <div className="w-12 h-12 rounded-full border border-border dark:border-border-dark bg-black/5 dark:bg-white/5 flex items-center justify-center mx-auto text-ink-muted dark:text-ink-muted-dark">
-          <InfoIcon className="w-6 h-6" />
-        </div>
+    <main className="w-full flex-1">
+      <div className="max-w-[880px] mx-auto px-4 md:px-6 pt-12 md:pt-24 pb-16">
+        <h1 className="text-[32px] sm:text-[44px] leading-[38px] sm:leading-[50px] font-semibold text-ink tracking-[-0.01em]">
+          What did I miss?
+        </h1>
 
-        <div className="space-y-2">
-          <h2 className="text-[20px] font-semibold text-ink dark:text-ink-dark">
-            Unable to parse chat export
-          </h2>
-          <p className="text-[15px] text-ink-muted dark:text-ink-muted-dark leading-relaxed">
-            {errorMessage ||
-              'We could not detect valid WhatsApp messages in this file. Please make sure the export was saved without media as a .txt file.'}
-          </p>
-        </div>
+        <p className="mt-3 text-base leading-6 text-ink-muted max-w-[60ch]">
+          Get a briefing from a long chat. Everything is processed on your device.
+        </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <Button
-            variant="primary"
-            onClick={onReset}
-            className="w-full sm:w-auto"
-          >
-            Try another file
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onTrySample}
-            className="w-full sm:w-auto"
-          >
-            Try sample chat
-          </Button>
+        <div className="mt-8">
+          <Card role="alert" className="p-8 space-y-6">
+            <div className="w-12 h-12 rounded-xl bg-card-raised border border-border flex items-center justify-center text-ink-muted">
+              <TriangleAlertIcon className="w-6 h-6 text-ink" size={24} />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold text-ink">
+                We could not read that file
+              </h2>
+              <p className="text-base text-ink-muted leading-relaxed">
+                {errorMessage || 'Only WhatsApp .txt exports up to 5 MB are supported.'}
+              </p>
+            </div>
+
+            <div>
+              <Button variant="primary" onClick={onReset}>
+                Choose another file
+              </Button>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
     </main>
   )
 }
