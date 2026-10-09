@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2');
+}
+
+@theme {
+  --color-base: #F5F4F2;
+  --color-base-dark: #111110;
+  --color-surface: #FFFFFF;
+  --color-surface-dark: #1C1C1A;
+  --color-ink: #1A1A1A;
+  --color-ink-dark: #F0EFEB;
+  --color-ink-muted: #6B7280;
+  --color-ink-muted-dark: #9CA3AF;
+  --color-primary: #1A6B6B;
+  --color-primary-dark: #2D9B9B;
+  --color-primary-hover: #145555;
+  --color-accent: #C96A2E;
+  --color-accent-hover: #B25A24;
+  --color-border: #E5E3DF;
+  --color-border-dark: #2E2E2B;
+  --color-highlight-bg: #E6F0F0;
+  --color-highlight-bg-dark: #1A3535;
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --bg-page: #F5F4F2;
+  --bg-surface: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-muted: #6B7280;
+  --color-brand: #1A6B6B;
+  --color-brand-hover: #145555;
+  --color-cta: #C96A2E;
+  --color-cta-hover: #B25A24;
+  --color-line: #E5E3DF;
+  --color-source-highlight: #E6F0F0;
+}
+
+.dark {
+  --bg-page: #111110;
+  --bg-surface: #1C1C1A;
+  --text-primary: #F0EFEB;
+  --text-muted: #9CA3AF;
+  --color-brand: #2D9B9B;
+  --color-brand-hover: #3AB4B4;
+  --color-cta: #C96A2E;
+  --color-cta-hover: #B25A24;
+  --color-line: #2E2E2B;
+  --color-source-highlight: #1A3535;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Enforce 60-75 character readable column for text content containers */
+.readable-measure {
+  max-width: 65ch;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Consistent focus ring */
+:focus-visible {
+  outline: 2px solid #1A6B6B;
+  outline-offset: 2px;
+}
+.dark :focus-visible {
+  outline: 2px solid #2D9B9B;
+  outline-offset: 2px;
+}
