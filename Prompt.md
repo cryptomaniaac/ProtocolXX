@@ -35,6 +35,54 @@
 
 ---
 
+### [P-010] Backend & Architecture + Code Quality improvements
+**Date**: 2026-10-09
+**Commit**: `ac550a9`
+**Live**: `/api/health` returns `{ status: "ok", version: "ac550a9" }` ✅
+
+**Prompt summary**:
+```
+Improve Backend & Architecture (65) and Code Standards & Quality (75) scores.
+Use free APIs only.
+```
+
+**Hackathon scores before**:
+- Innovation & Novelty: 85 | UI/UX & Impact: 90 | Security & Optimization: 80
+- Code Standards & Quality: **75** | Backend & Architecture: **65** → total 84.75 (#9/18)
+
+**What was built**:
+- `api/_lib/rateLimit.ts` — in-memory rate limiter (no external service, fully free)
+  - `send-otp`: max 3 OTP requests per email per 10 minutes
+  - `verify-otp`: max 5 verify attempts per email per 10 minutes
+  - Evicts expired entries on each call — no memory leak
+  - `rateLimitKey()` normalises identifiers to prevent case-variant bypass
+- `api/_lib/schemas.ts` — Zod v4 input validation schemas
+  - `sendOtpSchema`: email normalisation + max length + format validation
+  - `verifyOtpSchema`: strict 6-digit numeric regex + token presence check
+- `api/_lib/middleware.ts` — shared handler utilities
+  - `json()`, `methodGuard()`, `parseBody()`, `parseCookie()`
+  - Inline structural types (no `node:http` import) — works in both browser + node tsconfigs
+- `api/health.ts` — `/api/health` liveness endpoint (returns status + timestamp + commit SHA)
+- `api/tsconfig.json` — dedicated Node.js tsconfig for serverless functions (strict, nodenext)
+- All 4 API handlers refactored to use shared `_lib` utilities — zero duplication
+- `src/test/apiHelpers.test.ts` — 19 new unit tests
+  - Rate limiter: allow, block, reset after window, key normalisation
+  - Zod schemas: valid/invalid email, valid/invalid OTP formats
+  - Cookie parser: present, absent, last cookie, empty header
+
+**Build fixes**:
+- `tsconfig.app.json`: add `"exclude": ["api"]` — prevents browser tsconfig from seeing Node files
+- `package.json`: `build` now uses `tsc -p tsconfig.app.json` instead of `tsc -b`
+- Zod v4 API fixes: `required_error` → `.min(1, msg)`, `.errors` → `.issues`
+
+**Verification**:
+- `npm test` → 56/56 ✅ (9 files, 37 original + 19 new)
+- `npm run build` → EXIT 0, no TS errors ✅
+- `npm audit --audit-level=high` → 0 vulnerabilities ✅
+- `/api/health` live: `{ status: "ok", version: "ac550a9" }` ✅
+
+---
+
 ### [P-009] Email OTP login — live and working
 **Date**: 2026-10-09
 **Commit**: `5c7acf8`
