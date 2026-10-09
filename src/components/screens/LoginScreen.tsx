@@ -181,6 +181,19 @@ export function LoginScreen({ onLogin }: Props) {
             </button>
           )}
 
+          {/* Guest bypass — always visible on email stage */}
+          {isEmailStage && (
+            <button
+              type="button"
+              onClick={() => onLogin({ email: 'guest' })}
+              disabled={isBusy}
+              className="w-full h-11 rounded-lg border border-border text-ink-muted text-sm font-normal transition-colors hover:text-ink hover:border-ink disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-card"
+              data-testid="guest-btn"
+            >
+              Continue without account
+            </button>
+          )}
+
           {isOtpStage && (
             <button
               type="button"
@@ -213,7 +226,7 @@ export function LoginScreen({ onLogin }: Props) {
         {/* Privacy note */}
         <p className="mt-4 text-xs text-ink-faint text-center">
           Your email is used only to verify your identity and is never stored
-          beyond your session.
+          beyond your session. Guest mode keeps all data local only.
         </p>
       </div>
     </main>

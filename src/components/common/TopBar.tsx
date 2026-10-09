@@ -48,16 +48,16 @@ export const TopBar: React.FC<TopBarProps> = ({
           {userEmail && onLogout && (
             <div className="flex items-center gap-2 border border-border rounded-lg px-3 h-9">
               <span className="text-xs text-ink-muted hidden sm:inline max-w-[140px] truncate">
-                {userEmail}
+                {userEmail === 'guest' ? 'Guest' : userEmail}
               </span>
               <button
                 type="button"
                 onClick={onLogout}
-                aria-label="Sign out"
+                aria-label={userEmail === 'guest' ? 'Sign in' : 'Sign out'}
                 className="text-xs text-ink-muted hover:text-ink transition-colors cursor-pointer"
                 data-testid="logout-btn"
               >
-                Sign out
+                {userEmail === 'guest' ? 'Sign in' : 'Sign out'}
               </button>
             </div>
           )}
