@@ -10,6 +10,7 @@
     "test:coverage": "vitest run --coverage",
     "audit": "npm audit --audit-level=high",
     "lint": "oxlint",
+    "check:secrets": "node scripts/check-secrets.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
